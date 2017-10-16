@@ -14,6 +14,19 @@ from aligner.models import AcousticModel
 from aligner.config import TEMP_DIR
 
 
+class DummyArgs(object):
+    def __init__(self):
+        self.speaker_characters = 0
+        self.num_jobs = 0
+        self.verbose = False
+        self.clean = True
+        self.fast = True
+        self.no_speaker_adaptation = False
+        self.debug = False
+        self.errors = False
+        self.temp_directory = None
+
+
 def fix_path():
     if getattr(sys, 'frozen', False):
         base_dir = os.path.dirname(sys.executable)
@@ -24,10 +37,11 @@ def fix_path():
     else:
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
         thirdparty_dir = os.path.join(base_dir, 'thirdparty', 'bin')
+    old_path = os.environ.get('PATH', '')
     if sys.platform == 'win32':
-        os.environ['PATH'] = thirdparty_dir + ';' + os.environ['PATH']
+        os.environ['PATH'] = thirdparty_dir + ';' + old_path
     else:
-        os.environ['PATH'] = thirdparty_dir + ':' + os.environ['PATH']
+        os.environ['PATH'] = thirdparty_dir + ':' + old_path
         os.environ['LD_LIBRARY_PATH'] = thirdparty_dir + ':' + os.environ.get('LD_LIBRARY_PATH', '')
 
 

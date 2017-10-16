@@ -8,6 +8,8 @@ from aligner.models import G2PModel
 from aligner.exceptions import ArgumentError
 from aligner.config import TEMP_DIR
 
+from aligner.command_line.align import fix_path, unfix_path
+
 
 def generate_dict(args):
     if not args.temp_directory:
@@ -15,12 +17,12 @@ def generate_dict(args):
     else:
         temp_dir = os.path.expanduser(args.temp_directory)
     input_dir = os.path.expanduser(args.corpus_directory)
-    corpus = Corpus(input_dir, "")
 
+    corpus = Corpus(input_dir, os.path.join(temp_dir, 'corpus'))
+    word_set = corpus.word_set
     model = G2PModel(args.g2p_model_path)
 
-    gen = PhonetisaurusDictionaryGenerator(model, corpus, args.output_path, temp_directory=temp_dir,
-                                         korean=args.korean)
+    gen = PhonetisaurusDictionaryGenerator(model, word_set, args.output_path, temp_directory=temp_dir)
     gen.generate()
 
 
@@ -39,22 +41,17 @@ def validate(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Create a dictionary from a G2P model")
 
-    parser.add_argument("--g2p_model_path",
-                        required=True, help="Path to the trained G2P model")
+    parser.add_argument("g2p_model_path", help="Path to the trained G2P model")
 
-    parser.add_argument("--corpus_directory",
-                        required=True, help="Corpus to base word list on")
+    parser.add_argument("corpus_directory", help="Corpus to base word list on")
 
-    parser.add_argument("--output_path",
-                        help="Path to save output dictionary")
+    parser.add_argument("output_path", help="Path to save output dictionary")
 
     parser.add_argument('-t', '--temp_directory', type=str, default='',
                         help='Temporary directory root to use for dictionary generation, default is ~/Documents/MFA')
 
-    parser.add_argument("--korean", action='store_true',
-                        help="Set to true if corpus is in Korean. "
-                             "Decomposes Hangul into separate letters (jamo) and increases accuracy")
-
     args = parser.parse_args()
+    fix_path()
     validate(args)
     generate_dict(args)
+    unfix_path()

@@ -18,7 +18,8 @@ Common options for both aligner executables
 
    Number of characters to use to identify speakers; if not specified,
    the aligner assumes that the directory name is the identifier for the
-   speaker.  Additionally, it accepts the value ``prosodylab`` to use the second field of a ``_`` delimited file name.
+   speaker.  Additionally, it accepts the value ``prosodylab`` to use the second field of a ``_`` delimited file name,
+   following the convention of labelling production data in the ProsodyLab at McGill.
 
 .. cmdoption:: -t DIRECTORY
                --temp_directory DIRECTORY
@@ -68,6 +69,12 @@ Command template:
 
    bin/mfa_align corpus_directory dictionary_path acoustic_model_path output_directory
 
+.. warning::
+
+   Do not specify an existing directory as the output directory (unless it is from an earlier run of the aligner).  The
+   current functionality of the aligner destroys the output directory prior to generating TextGrids.  Future versions will
+   be smarter about cleaning up TextGrids from previous runs without removing the directory.
+
 .. note::
    ``acoustic_model_path`` can also be a language that has been pretrained ("english" at the moment but other languages coming soon)
 
@@ -82,11 +89,6 @@ Extra options (in addition to the common ones listed above):
                --errors
 
    Flag for whether utterance transcriptions should be checked for errors prior to aligning
-
-.. note::
-
-   The arguments ``acoustic_model_path`` and ``language`` are mutually exclusive
-   and one of the two must be specified to align a data set.
 
 Steps to align:
 
@@ -114,6 +116,12 @@ Command template:
 .. code-block:: bash
 
    bin/mfa_train_and_align corpus_directory dictionary_path output_directory
+
+.. warning::
+
+   Do not specify an existing directory as the output directory (unless it is from an earlier run of the aligner).  The
+   current functionality of the aligner destroys the output directory prior to generating TextGrids.  Future versions will
+   be smarter about cleaning up TextGrids from previous runs without removing the directory.
 
 
 Extra options (in addition to the common ones listed above):

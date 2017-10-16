@@ -7,6 +7,8 @@ from aligner.command_line.train_and_align import align_corpus as train_and_align
 from aligner.command_line.generate_dictionary import generate_dict
 from aligner.command_line.train_g2p import train_g2p
 
+from aligner.exceptions import PronunciationAcousticMismatchError
+
 
 class DummyArgs(object):
     def __init__(self):
@@ -24,7 +26,8 @@ class DummyArgs(object):
 class G2PDummyArgs(object):
     def __init__(self):
         self.temp_directory = None
-        self.korean = False
+        self.window_size = 2
+
 
 
 large = pytest.mark.skipif(
@@ -45,36 +48,41 @@ def assert_export_exist(old_directory, new_directory):
             assert (os.path.exists(os.path.join(new_root, new_f)))
 
 
-def test_align_basic(basic_corpus_dir, sick_dict_path, generated_dir):
+def test_align_basic(basic_corpus_dir, sick_dict_path, generated_dir, large_dataset_dictionary):
     args = DummyArgs()
     args.acoustic_model_path = 'english'
     args.corpus_directory = basic_corpus_dir
     args.dictionary_path = sick_dict_path
     args.output_directory = os.path.join(generated_dir, 'basic_output')
-    align_included_model(args, skip_input=True)
+    with pytest.raises(PronunciationAcousticMismatchError):
+        align_included_model(args, skip_input=True)
 
     #args.clean = False
     #args.acoustic_model_path = 'english'
     #align_included_model(args, skip_input=True)
-
-
-def test_align_basic_errors(basic_corpus_dir, sick_dict_path, generated_dir):
-    args = DummyArgs()
-    args.errors = True
     args.acoustic_model_path = 'english'
     args.corpus_directory = basic_corpus_dir
-    args.dictionary_path = sick_dict_path
+    args.dictionary_path = large_dataset_dictionary
     args.output_directory = os.path.join(generated_dir, 'basic_output')
     align_included_model(args, skip_input=True)
 
 
-@pytest.mark.xfail
-def test_align_basic_debug(basic_corpus_dir, sick_dict_path, generated_dir):
+def test_align_basic_errors(basic_corpus_dir, large_dataset_dictionary, generated_dir):
+    args = DummyArgs()
+    args.errors = True
+    args.acoustic_model_path = 'english'
+    args.corpus_directory = basic_corpus_dir
+    args.dictionary_path = large_dataset_dictionary
+    args.output_directory = os.path.join(generated_dir, 'basic_output')
+    align_included_model(args, skip_input=True)
+
+
+def test_align_basic_debug(basic_corpus_dir, large_dataset_dictionary, generated_dir):
     args = DummyArgs()
     args.debug = True
     args.acoustic_model_path = 'english'
     args.corpus_directory = basic_corpus_dir
-    args.dictionary_path = sick_dict_path
+    args.dictionary_path = large_dataset_dictionary
     args.output_directory = os.path.join(generated_dir, 'basic_output')
     align_included_model(args, skip_input=True)
 
@@ -174,6 +182,7 @@ def test_train_large_textgrid_nodict(large_textgrid_format_directory,
 
 def test_train_g2p(sick_dict_path, sick_g2p_model_path):
     args = G2PDummyArgs()
+    args.validate = True
     args.dictionary_path = sick_dict_path
     args.output_model_path = sick_g2p_model_path
     train_g2p(args)

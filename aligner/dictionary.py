@@ -5,7 +5,7 @@ import re
 from collections import defaultdict, Counter
 
 from .helper import thirdparty_binary
-from .exceptions import DictionaryPathError, DictionaryFileError
+from .exceptions import DictionaryPathError, DictionaryFileError, DictionaryError
 
 
 def compile_graphemes(graphemes):
@@ -14,10 +14,22 @@ def compile_graphemes(graphemes):
     else:
         base = r'^\W*([{}]+)\W*'
     string = ''.join(x for x in graphemes if x != '-')
-    return re.compile(base.format(string))
+    try:
+        return re.compile(base.format(string))
+    except Exception:
+        print(graphemes)
+        raise
+
+
+brackets = [('[', ']'), ('{', '}'), ('<', '>')]
 
 
 def sanitize(item):
+    if not item:
+        return item
+    for b in brackets:
+        if item[0] == b[0] and item[-1] == b[1]:
+            return item
     # Clitic markers are "-" and "'"
     sanitized = re.sub(r"^[^-\w']+", '', item)
     sanitized = re.sub(r"[^-\w']+$", '', sanitized)
@@ -25,6 +37,11 @@ def sanitize(item):
 
 
 def sanitize_clitics(item):
+    if not item:
+        return item
+    for b in brackets:
+        if item[0] == b[0] and item[-1] == b[1]:
+            return item
     # Clitic markers are "-" and "'"
     sanitized = re.sub(r"^\W+", '', item)
     sanitized = re.sub(r"\W+$", '', sanitized)
@@ -69,7 +86,6 @@ class Dictionary(object):
     def __init__(self, input_path, output_directory, oov_code='<unk>',
                  position_dependent_phones=True, num_sil_states=5,
                  num_nonsil_states=3, shared_silence_phones=True,
-                 pronunciation_probabilities=True,
                  sil_prob=0.5, word_set=None, debug=False):
         if not os.path.exists(input_path):
             raise (DictionaryPathError(input_path))
@@ -84,7 +100,6 @@ class Dictionary(object):
         self.sil_prob = sil_prob
         self.oov_code = oov_code
         self.position_dependent_phones = position_dependent_phones
-        self.pronunciation_probabilities = pronunciation_probabilities
 
         self.words = defaultdict(list)
         self.nonsil_phones = set()
@@ -96,13 +111,16 @@ class Dictionary(object):
             word_set = {sanitize(x) for x in word_set}
         self.words['!sil'].append((('sp',), 1))
         self.words[self.oov_code].append((('spn',), 1))
+        self.pronunciation_probabilities = True
         with open(input_path, 'r', encoding='utf8') as inf:
-            for line in inf:
+            for i, line in enumerate(inf):
                 line = line.strip()
                 if not line:
                     continue
                 line = line.split()
                 word = line.pop(0).lower()
+                if not line:
+                    raise DictionaryError('Line {} of {} does not have a pronunciation.'.format(i, input_path))
                 if word in ['!sil', oov_code]:
                     continue
                 if word_set is not None and sanitize(word) not in word_set:
@@ -113,6 +131,7 @@ class Dictionary(object):
                     line = line[1:]
                 except ValueError:
                     prob = None
+                    self.pronunciation_probabilities = False
                 pron = tuple(line)
                 if not any(x in self.sil_phones for x in pron):
                     self.nonsil_phones.update(pron)

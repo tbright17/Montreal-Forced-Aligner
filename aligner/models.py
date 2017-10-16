@@ -72,7 +72,7 @@ class Archive(object):
 
 class AcousticModel(Archive):
     def add_meta_file(self, aligner):
-        with open(os.path.join(self.dirname, 'meta.yaml'), 'w') as f:
+        with open(os.path.join(self.dirname, 'meta.yaml'), 'w', encoding='utf8') as f:
             yaml.dump(aligner.meta, f)
 
     @property
@@ -83,7 +83,7 @@ class AcousticModel(Archive):
                 self._meta = {'version': '0.9.0',
                               'architecture': 'gmm-hmm'}
             else:
-                with open(meta_path, 'r') as f:
+                with open(meta_path, 'r', encoding='utf8') as f:
                     self._meta = yaml.load(f)
             self._meta['phones'] = set(self._meta.get('phones', []))
         return self._meta
@@ -108,15 +108,9 @@ class AcousticModel(Archive):
         """
         """
         os.makedirs(destination, exist_ok=True)
-        ali_model_path = os.path.join(self.dirname, 'ali-final.mdl')
-        if False and os.path.exists(ali_model_path):
-            copyfile(ali_model_path, os.path.join(destination, 'final.mdl'))
-            copyfile(os.path.join(self.dirname, 'ali-final.occs'), os.path.join(destination, 'final.occs'))
-            copyfile(os.path.join(self.dirname, 'ali-tree'), os.path.join(destination, 'tree'))
-        else:
-            copyfile(os.path.join(self.dirname, 'final.mdl'), os.path.join(destination, 'final.mdl'))
-            copyfile(os.path.join(self.dirname, 'final.occs'), os.path.join(destination, 'final.occs'))
-            copyfile(os.path.join(self.dirname, 'tree'), os.path.join(destination, 'tree'))
+        copyfile(os.path.join(self.dirname, 'final.mdl'), os.path.join(destination, 'final.mdl'))
+        copyfile(os.path.join(self.dirname, 'final.occs'), os.path.join(destination, 'final.occs'))
+        copyfile(os.path.join(self.dirname, 'tree'), os.path.join(destination, 'tree'))
 
     def export_triphone_fmllr_model(self, destination):
         """
@@ -128,18 +122,16 @@ class AcousticModel(Archive):
 
     def validate(self, dictionary):
         if isinstance(dictionary, G2PModel):
-            if self.meta['phones'] < dictionary.meta['phones']:
-                missing_phones = dictionary.meta['phones'] - set(self.meta['phones'])
-                raise (PronunciationAcousticMismatchError(missing_phones))
+            missing_phones = dictionary.meta['phones'] - set(self.meta['phones'])
         else:
             missing_phones = dictionary.nonsil_phones - set(self.meta['phones'])
-            if missing_phones:
-                raise (PronunciationAcousticMismatchError(missing_phones))
+        if missing_phones:
+            raise (PronunciationAcousticMismatchError(missing_phones))
 
 
 class G2PModel(Archive):
     def add_meta_file(self, dictionary):
-        with open(os.path.join(self.dirname, 'meta.yaml'), 'w') as f:
+        with open(os.path.join(self.dirname, 'meta.yaml'), 'w', encoding='utf8') as f:
             meta = {'phones': sorted(dictionary.nonsil_phones),
                     'graphemes': sorted(dictionary.graphemes),
                     'architecture': 'phonetisaurus',
@@ -154,7 +146,7 @@ class G2PModel(Archive):
                 self._meta = {'version': '0.9.0',
                               'architecture': 'phonetisaurus'}
             else:
-                with open(meta_path, 'r') as f:
+                with open(meta_path, 'r', encoding='utf8') as f:
                     self._meta = yaml.load(f)
             self._meta['phones'] = set(self._meta.get('phones', []))
             self._meta['graphemes'] = set(self._meta.get('graphemes', []))
