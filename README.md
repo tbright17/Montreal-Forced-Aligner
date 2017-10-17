@@ -10,3 +10,8 @@ The Montreal Forced Aligner is a command line utility for performing forced alig
 Please see the documentation http://montreal-forced-aligner.readthedocs.io for installation and usage.
 
 If you run into any issues, please check the [mailing list](https://groups.google.com/forum/#!forum/mfa-users) for fixes/workarounds or to post a new issue.
+
+To improve:
+
+1. Add DNN-HMM architecture to do alignment. multiprocessing: align_func:459: gmm-align-compiled
+2. Add other acoustic feature support besides MFCC, such as fbank and PLP
